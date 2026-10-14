@@ -13,6 +13,7 @@
 #include "utils.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 static uint64_t PERIOD;
 static uint16_t TURBO_SKIP;
@@ -89,6 +90,37 @@ void init_emulator(Emulator* emulator, int argc, char *argv[]){
     emulator->pause = 0;
 }
 #endif
+
+static int abort_init(Emulator* emulator, int code){
+    free_mapper(&emulator->mapper);
+    memset(emulator, 0, sizeof(Emulator));
+    return code;
+}
+
+int init_emulator_data(Emulator* emulator, const uint8_t* rom, size_t size, const char* name){
+    memset(emulator, 0, sizeof(Emulator));
+    if(size < INES_HEADER_SIZE || memcmp(rom, "NES\x1A", 4) != 0) {
+        LOG(ERROR, "Not an iNES ROM image");
+        return -1;
+    }
+
+    ROMData data = {.rom_name = (char*)name, .rom = (uint8_t*)rom, .rom_size = size};
+    if(load_data(&data, &emulator->mapper) < 0)
+        return abort_init(emulator, -2);
+    emulator->type = emulator->mapper.type;
+    emulator->mapper.emulator = emulator;
+    TURBO_SKIP = emulator->type == PAL ? PAL_FRAME_RATE / PAL_TURBO_RATE : NTSC_FRAME_RATE / NTSC_TURBO_RATE;
+
+    init_mixer(emulator);
+    init_mem(emulator);
+    init_ppu(emulator);
+    if(emulator->ppu.screen == NULL)
+        return abort_init(emulator, -3);
+    init_cpu(emulator);
+    init_APU(emulator);
+    emulator->ppu.enabled = 1;
+    return 0;
+}
 
 void tick_master_clock(Emulator* emulator) {
     emulator->cpu.t_cycles++;

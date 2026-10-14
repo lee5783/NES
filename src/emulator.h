@@ -49,6 +49,7 @@ typedef struct Emulator{
 
 
 void init_emulator(Emulator* emulator, int argc, char *argv[]);
+int init_emulator_data(Emulator* emulator, const uint8_t* rom, size_t size, const char* name);
 void reset_emulator(Emulator* emulator);
 void tick_master_clock(Emulator* emulator);
 void run_emulator(Emulator* emulator);
