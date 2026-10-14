@@ -10,6 +10,7 @@ endif()
 
 # General configuration
 option(DISABLE_AUDIO "Disable audio output" OFF)
+option(EMU_HEADLESS "Build only the SDL-free core as a static library" OFF)
 
 if (DISABLE_AUDIO)
   add_compile_definitions(nes PRIVATE DISABLE_AUDIO)
@@ -33,28 +34,19 @@ ELSE()
   option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 ENDIF()
 
-add_subdirectory(${SDL_DIR})
-add_subdirectory(${SDL_ttf_DIR})
-
-set (SRC
+set (CORE_SRC
         src/apu.c
         src/controller.c
         src/cpu6502.c
         src/debugtools.c
         src/emulator.c
-        src/gamepad.c
         src/genie.c
-        src/gfx.c
         src/mmu.c
         src/ppu.c
         src/timers.c
         src/trace.c
-        src/touchpad.c
-        src/trace.c
         src/utils.c
-        src/main.c
         src/nsf.c
-        src/nsf_gfx.c
         src/biquad.c
         src/mixer.c
 
@@ -71,6 +63,31 @@ set (SRC
         src/mappers/mapper185.c
         src/mappers/cprom.c
 )
+
+IF(EMU_HEADLESS)
+  add_library(nes_core STATIC ${CORE_SRC})
+  target_compile_definitions(nes_core PUBLIC EMU_HEADLESS)
+  target_include_directories(nes_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/src/mappers)
+  IF(ANDROID)
+    target_link_libraries(nes_core ${log-lib} m)
+  ELSEIF(NOT WIN32)
+    target_link_libraries(nes_core m)
+  ENDIF()
+  return()
+ENDIF()
+
+set (SRC
+        ${CORE_SRC}
+        src/gamepad.c
+        src/gfx.c
+        src/touchpad.c
+        src/main.c
+        src/nsf_gfx.c
+)
+
+add_subdirectory(${SDL_DIR})
+add_subdirectory(${SDL_ttf_DIR})
+
 include_directories(src src/mappers ${SDL_DIR}/include/SDL3 ${SDL_DIR}/include ${SDL_ttf_DIR}/include/SDL3_ttf)
 
 
