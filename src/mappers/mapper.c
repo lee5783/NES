@@ -345,14 +345,20 @@ int load_data(ROMData *rom_data, Mapper *mapper) {
         }
     }
 
+    if (rom_data->rom_size < INES_HEADER_SIZE + 0x4000 * mapper->PRG_banks + 0x2000 * mapper->CHR_banks) {
+        LOG(ERROR, "ROM image is truncated");
+        return -1;
+    }
+
     if (!mapper->RAM_banks && mapper->format != NES2) {
         LOG(INFO, "PRG RAM Banks (8kb): Not specified, Assuming 8kb");
         mapper->RAM_size = 0x2000;
     }
 
     if (mapper->RAM_size) {
-        mapper->PRG_RAM = malloc(mapper->RAM_size);
-        memset(mapper->PRG_RAM, 0, mapper->RAM_size);
+        mapper->PRG_RAM = calloc(1, mapper->RAM_size);
+        if (mapper->PRG_RAM == NULL)
+            return -1;
     }
 
     if (mapper->format != NES2) {
@@ -373,11 +379,15 @@ int load_data(ROMData *rom_data, Mapper *mapper) {
     LOG(INFO, "CHR banks (8KB): %u", mapper->CHR_banks);
 
     mapper->PRG_ROM = malloc(0x4000 * mapper->PRG_banks);
+    if (mapper->PRG_ROM == NULL)
+        return -1;
     memcpy(mapper->PRG_ROM, rom_data->rom + offset, 0x4000 * mapper->PRG_banks);
     offset += 0x4000 * mapper->PRG_banks;
 
     if (mapper->CHR_banks) {
         mapper->CHR_ROM = malloc(0x2000 * mapper->CHR_banks);
+        if (mapper->CHR_ROM == NULL)
+            return -1;
         memcpy(mapper->CHR_ROM, rom_data->rom + offset, 0x2000 * mapper->CHR_banks);
         // offset += 0x2000 * mapper->CHR_banks;
     } else {
@@ -385,8 +395,9 @@ int load_data(ROMData *rom_data, Mapper *mapper) {
             LOG(INFO, "No CHR-RAM or CHR-ROM specified, Using 8kb CHR-RAM");
             mapper->CHR_RAM_size = 0x2000;
         }
-        mapper->CHR_ROM = malloc(mapper->CHR_RAM_size);
-        memset(mapper->CHR_ROM, 0, mapper->CHR_RAM_size);
+        mapper->CHR_ROM = calloc(1, mapper->CHR_RAM_size);
+        if (mapper->CHR_ROM == NULL)
+            return -1;
     }
 
     switch (mapper->type) {
