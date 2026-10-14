@@ -15,7 +15,9 @@ void free_mixer(const Mixer* mixer){}
 #else
 
 static void init_sampler(Mixer* mixer, int frequency, TVSystem sys);
+#ifndef EMU_HEADLESS
 static void init_audio_device(Mixer* mixer);
+#endif
 
 void init_mixer(Emulator* emulator) {
     Mixer* mixer = &emulator->mixer;
@@ -28,10 +30,13 @@ void init_mixer(Emulator* emulator) {
     mixer->volume = 1;
 
     init_sampler(mixer, SAMPLING_FREQUENCY, emulator->type);
+#ifndef EMU_HEADLESS
     init_audio_device(mixer);
     pause_audio(mixer, 1);
+#endif
 }
 
+#ifndef EMU_HEADLESS
 void init_audio_device(Mixer* mixer) {
 
     const SDL_AudioSpec spec = {
@@ -46,6 +51,7 @@ void init_audio_device(Mixer* mixer) {
         quit(EXIT_FAILURE);
     }
 }
+#endif
 
 void init_sampler(Mixer* mixer, int frequency, TVSystem sys) {
     float cycles_per_frame = sys == PAL? 33247.5: 29780.5;
@@ -111,6 +117,7 @@ void sample(Mixer* mixer) {
     }
 }
 
+#ifndef EMU_HEADLESS
 void queue_audio(Mixer* mixer) {
     uint32_t queue_size = SDL_GetAudioStreamQueued(mixer->audio_stream);
     mixer->stat = mixer->stat - mixer->stat_window[mixer->stat_index] + queue_size;
@@ -166,4 +173,5 @@ void pause_audio(Mixer* mixer, const int flag) {
 void free_mixer(const Mixer* mixer) {
     SDL_DestroyAudioStream(mixer->audio_stream);
 }
+#endif
 #endif

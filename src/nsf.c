@@ -710,7 +710,9 @@ void init_song(Emulator* emulator, size_t song_number) {
     set_cpu_mode(&emulator->cpu, CPU_WAIT_IRQ);
     emulator->mixer.audio_start = 0;
     emulator->mixer.sampler.index = 0;
+#ifndef EMU_HEADLESS
     pause_audio(&emulator->mixer, 1);
+#endif
 
     for(size_t i = 0; i < 14; i++) {
         write_mem(&emulator->mem, 0x4000 + i, 0);

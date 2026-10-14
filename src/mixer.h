@@ -3,7 +3,9 @@
 #include "apu.h"
 #include "biquad.h"
 
+#ifndef EMU_HEADLESS
 #include <SDL.h>
+#endif
 
 #define SAMPLING_FREQUENCY 48000
 // should be able to store samples produced in 1/60th of a second
@@ -47,7 +49,9 @@ typedef struct {
     float volume;
     uint8_t audio_start;
 #ifndef DISABLE_AUDIO
+#ifndef EMU_HEADLESS
     SDL_AudioStream* audio_stream;
+#endif
     float stat;
     size_t stat_index;
     Biquad filter;
@@ -57,7 +61,9 @@ typedef struct {
 } Mixer;
 
 void sample(Mixer* mixer);
+#ifndef EMU_HEADLESS
 void queue_audio(Mixer* mixer);
 void pause_audio(Mixer* mixer, int flag);
 void free_mixer(const Mixer* mixer);
+#endif
 

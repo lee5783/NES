@@ -1,20 +1,23 @@
 #include "emulator.h"
+#ifndef EMU_HEADLESS
 #include "gamepad.h"
 #include "touchpad.h"
-#include "controller.h"
 #include "gfx.h"
+#include "nsf_gfx.h"
+#endif
+#include "controller.h"
 #include "mapper.h"
 #include "nsf.h"
 #include "timers.h"
 #include "debugtools.h"
 #include "utils.h"
-#include "nsf_gfx.h"
 
 #include <stdlib.h>
 
 static uint64_t PERIOD;
 static uint16_t TURBO_SKIP;
 
+#ifndef EMU_HEADLESS
 void init_emulator(Emulator* emulator, int argc, char *argv[]){
     if(argc < 2) {
         LOG(ERROR, "Input file not provided");
@@ -85,6 +88,7 @@ void init_emulator(Emulator* emulator, int argc, char *argv[]){
     emulator->exit = 0;
     emulator->pause = 0;
 }
+#endif
 
 void tick_master_clock(Emulator* emulator) {
     emulator->cpu.t_cycles++;
@@ -125,6 +129,7 @@ void tick_master_clock(Emulator* emulator) {
 }
 
 
+#ifndef EMU_HEADLESS
 void run_emulator(Emulator* emulator){
     if(emulator->mapper.is_nsf) {
         run_NSF_player(emulator);
@@ -214,14 +219,17 @@ void run_emulator(Emulator* emulator){
     emulator->time_diff = get_diff_ms(&frame_timer);
     release_timer(&frame_timer);
 }
+#endif
 
 void reset_emulator(Emulator* emulator) {
+#ifndef EMU_HEADLESS
     // Use as exit procedure for TV mode
     if(emulator->g_ctx.is_tv){
         emulator->exit = 1;
         LOG(DEBUG, "Exiting emulator session (reset on TV)");
         return;
     }
+#endif
     LOG(INFO, "Resetting emulator");
     reset_cpu(&emulator->cpu);
     reset_APU(&emulator->apu);
@@ -231,6 +239,7 @@ void reset_emulator(Emulator* emulator) {
     }
 }
 
+#ifndef EMU_HEADLESS
 void run_NSF_player(Emulator* emulator) {
     LOG(INFO, "Starting NSF player...");
     JoyPad* joy1 = &emulator->mem.joy1;
@@ -375,15 +384,20 @@ void run_NSF_player(Emulator* emulator) {
     release_timer(&frame_timer);
     free_NSF_graphics(&nsf_ctx);
 }
+#endif
 
 
 void free_emulator(Emulator* emulator){
     LOG(DEBUG, "Starting emulator clean up");
     exit_ppu(&emulator->ppu);
     free_mapper(&emulator->mapper);
+#ifndef EMU_HEADLESS
     ANDROID_FREE_TOUCH_PAD();
     free_mixer(&emulator->mixer);
+#endif
     release_timer(&emulator->timer);
+#ifndef EMU_HEADLESS
     free_graphics(&emulator->g_ctx); // must always be last
+#endif
     LOG(DEBUG, "Emulator session successfully terminated");
 }

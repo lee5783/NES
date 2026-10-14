@@ -5,7 +5,9 @@
 #include "mmu.h"
 #include "apu.h"
 #include "mapper.h"
+#ifndef EMU_HEADLESS
 #include "gfx.h"
+#endif
 #include "mixer.h"
 #include "timers.h"
 
@@ -30,7 +32,9 @@ typedef struct Emulator{
     APU apu;
     Memory mem;
     Mapper mapper;
+#ifndef EMU_HEADLESS
     GraphicsContext g_ctx;
+#endif
     Mixer mixer;
     Timer timer;
 
