@@ -1,3 +1,4 @@
+#include <string.h>
 #include "apu.h"
 #include "emulator.h"
 #include "utils.h"
