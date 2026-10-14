@@ -150,7 +150,7 @@ int adjusted_wait(Timer* timer){
             .tv_sec=req_period_ns / G,
             .tv_nsec=req_period_ns % G
     };
-    return clock_nanosleep(CLOCK_MONOTONIC, 0, &req, NULL);
+    return nanosleep(&req, NULL);
 }
 
 
@@ -160,7 +160,7 @@ int wait(uint64_t period_ms){
         .tv_sec=req_period_ns / G,
         .tv_nsec=req_period_ns % G
     };
-    return clock_nanosleep(CLOCK_MONOTONIC, 0, &req, NULL);
+    return nanosleep(&req, NULL);
 }
 
 
