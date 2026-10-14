@@ -9,6 +9,7 @@
 void init_mixer(Emulator* emulator){}
 void sample(Mixer* mixer){}
 size_t drain_audio(Mixer* mixer, int16_t* out, size_t max){return 0;}
+void adjust_audio_rate(Mixer* mixer, double ratio){}
 void queue_audio(Mixer* mixer){}
 void pause_audio(Mixer* mixer, int flag){}
 void free_mixer(const Mixer* mixer){}
@@ -55,7 +56,7 @@ void init_audio_device(Mixer* mixer) {
 #endif
 
 void init_sampler(Mixer* mixer, int frequency, TVSystem sys) {
-    float cycles_per_frame = sys == PAL? 33247.5: 29780.5;
+    float cycles_per_frame = sys == PAL? PAL_CYCLES_PER_FRAME: NTSC_CYCLES_PER_FRAME;
     float rate = sys == PAL? 50.0f : 60.0f;
     Sampler* sampler = &mixer->sampler;
     // Q = 0.707 => BW = 1.414 (1 octave)
@@ -63,20 +64,16 @@ void init_sampler(Mixer* mixer, int frequency, TVSystem sys) {
     // anti-aliasing filter.
     biquad_init(&mixer->aa_filter, LPF, 0, 20000, cycles_per_frame * rate, 1);
 
-    sampler->max_period = cycles_per_frame * rate / frequency;
-    sampler->min_period = sampler->max_period - 1;
-    sampler->period = sampler->min_period;
+    sampler->nominal_period = (sys == PAL? PAL_CPU_CLOCK: NTSC_CPU_CLOCK) / frequency;
+    sampler->period = sampler->nominal_period;
     sampler->index = 0;
     sampler->max_index = AUDIO_BUFF_SIZE;
     sampler->samples = 0;
     sampler->counter = 0;
-    sampler->factor_index = 0;
-    // basically the precision with which we vary the sampling rate
-    // 100 ->2 d.p, 1000->3 d.p, etc.
-    sampler->max_factor = 100;
-    // this may need to be calibrated to suit the current sampling frequency
-    // the current equilibrium is for 48000 hz
-    sampler->target_factor = sampler->equilibrium_factor = 48;
+}
+
+void adjust_audio_rate(Mixer* mixer, double ratio) {
+    mixer->sampler.period = mixer->sampler.nominal_period / ratio;
 }
 
 void sample(Mixer* mixer) {
@@ -105,16 +102,7 @@ void sample(Mixer* mixer) {
             sampler->index = 0;
         }
         sampler->samples++;
-        sampler->counter = 0;
-        if(sampler->factor_index <= sampler->target_factor) {
-            sampler->period = sampler->max_period;
-        }else {
-            sampler->period = sampler->min_period;
-        }
-        sampler->factor_index++;
-        if(sampler->factor_index > sampler->max_factor) {
-            sampler->factor_index = 0;
-        }
+        sampler->counter -= sampler->period;
     }
 }
 
@@ -138,19 +126,9 @@ void queue_audio(Mixer* mixer) {
 
     // From here we tweak the sampling rate ever so slightly to prevent underruns and runaway latency
     // by minimising deviation from the nominal queue size with a bit of control engineering
-    float delta_f, error = (float)avg - NOMINAL_QUEUE_SIZE;
+    float error = ((float)avg - NOMINAL_QUEUE_SIZE) / NOMINAL_QUEUE_SIZE;
     Sampler* s = &mixer->sampler;
-    if(error >= 0) {
-        delta_f = (s->max_factor - s->equilibrium_factor) * error / NOMINAL_QUEUE_SIZE;
-    }else {
-        delta_f = (s->equilibrium_factor * error / NOMINAL_QUEUE_SIZE);
-    }
-    // printf("delta %f, error %f \n", delta_f, error);
-    s->target_factor = s->equilibrium_factor + delta_f;
-    if(s->target_factor > s->max_factor) {
-        s->target_factor = s->max_factor;
-    }
-    // printf("target_f %d \n", s->target_factor);
+    adjust_audio_rate(mixer, 1 - MAX_RATE_DEVIATION * (error > 1 ? 1 : error));
 
     SDL_PutAudioStreamData(mixer->audio_stream, mixer->buff, s->index * 2);
     // wait till queue is filled to prevent early onset underruns

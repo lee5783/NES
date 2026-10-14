@@ -13,6 +13,7 @@
 // higher sampling frequency will need a bigger buffer
 #define AVERAGE_DOWNSAMPLING 0
 #define NOMINAL_QUEUE_SIZE 6000
+#define MAX_RATE_DEVIATION 0.01
 
 #ifdef DISABLE_AUDIO
 // no need to allocate so much memory that is not going to be used
@@ -27,15 +28,10 @@
 struct Emulator;
 
 typedef struct {
-    uint16_t factor_index;
-    uint16_t target_factor;
-    uint16_t equilibrium_factor;
-    uint16_t max_factor;
     size_t samples;
-    size_t max_period;
-    size_t min_period;
-    size_t period;
-    size_t counter;
+    double nominal_period;
+    double period;
+    double counter;
     size_t index;
     size_t max_index;
 } Sampler;
@@ -62,6 +58,7 @@ typedef struct {
 
 void sample(Mixer* mixer);
 size_t drain_audio(Mixer* mixer, int16_t* out, size_t max);
+void adjust_audio_rate(Mixer* mixer, double ratio);
 #ifndef EMU_HEADLESS
 void queue_audio(Mixer* mixer);
 void pause_audio(Mixer* mixer, int flag);

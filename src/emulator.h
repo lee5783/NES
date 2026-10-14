@@ -16,6 +16,11 @@
 #define NTSC_FRAME_RATE 60
 #define PAL_FRAME_RATE 50
 
+#define NTSC_CPU_CLOCK 1789772.7272727
+#define PAL_CPU_CLOCK 1662607.03125
+#define NTSC_CYCLES_PER_FRAME 29780.5
+#define PAL_CYCLES_PER_FRAME 33247.5
+
 // turbo keys toggle rate (Hz)
 // value should be a factor of FRAME_RATE
 // and should never exceed FRAME_RATE for best result
