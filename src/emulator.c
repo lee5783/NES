@@ -211,7 +211,7 @@ void run_emulator(Emulator* emulator){
             mark_end(timer);
             adjusted_wait(timer);
         }else{
-            wait(IDLE_SLEEP);
+            wait_ms(IDLE_SLEEP);
         }
     }
 
@@ -375,7 +375,7 @@ void run_NSF_player(Emulator* emulator) {
             mark_end(timer);
             adjusted_wait(timer);
         }else{
-            wait(IDLE_SLEEP);
+            wait_ms(IDLE_SLEEP);
         }
     }
 

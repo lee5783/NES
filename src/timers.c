@@ -71,7 +71,7 @@ int adjusted_wait(Timer* timer){
 }
 
 
-int wait(uint64_t period_ms){
+int wait_ms(uint64_t period_ms){
     Sleep(period_ms);
     return 0;
 }
@@ -154,7 +154,7 @@ int adjusted_wait(Timer* timer){
 }
 
 
-int wait(uint64_t period_ms){
+int wait_ms(uint64_t period_ms){
     int64_t req_period_ns = (int64_t)period_ms * M;
     struct timespec req = {
         .tv_sec=req_period_ns / G,
