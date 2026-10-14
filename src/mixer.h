@@ -61,6 +61,7 @@ typedef struct {
 } Mixer;
 
 void sample(Mixer* mixer);
+size_t drain_audio(Mixer* mixer, int16_t* out, size_t max);
 #ifndef EMU_HEADLESS
 void queue_audio(Mixer* mixer);
 void pause_audio(Mixer* mixer, int flag);

@@ -8,6 +8,7 @@
 
 void init_mixer(Emulator* emulator){}
 void sample(Mixer* mixer){}
+size_t drain_audio(Mixer* mixer, int16_t* out, size_t max){return 0;}
 void queue_audio(Mixer* mixer){}
 void pause_audio(Mixer* mixer, int flag){}
 void free_mixer(const Mixer* mixer){}
@@ -115,6 +116,13 @@ void sample(Mixer* mixer) {
             sampler->factor_index = 0;
         }
     }
+}
+
+size_t drain_audio(Mixer* mixer, int16_t* out, size_t max) {
+    size_t count = mixer->sampler.index < max ? mixer->sampler.index : max;
+    memcpy(out, mixer->buff, count * sizeof(int16_t));
+    mixer->sampler.index = 0;
+    return count;
 }
 
 #ifndef EMU_HEADLESS
