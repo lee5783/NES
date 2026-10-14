@@ -1,7 +1,9 @@
 #pragma once
 #include <stdio.h>
 #include <stdint.h>
+#ifndef EMU_HEADLESS
 #include <SDL.h>
+#endif
 
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
@@ -75,9 +77,11 @@ typedef enum ColorFormat {
 size_t file_size(FILE* file);
 void LOG(enum LogLevel logLevel, const char* fmt, ...);
 
+#ifndef EMU_HEADLESS
 // midpoint circle algorithm rendering utils
 int SDL_RenderDrawCircle(SDL_Renderer * renderer, int x, int y, int radius);
 int SDL_RenderFillCircle(SDL_Renderer * renderer, int x, int y, int radius);
+#endif
 void to_pixel_format(const uint32_t* restrict in, uint32_t* restrict out, size_t size, ColorFormat format);
 void fft(complx *v, int n, complx *tmp);
 uint64_t next_power_of_2(uint64_t num);

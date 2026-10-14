@@ -1,7 +1,9 @@
 #pragma once
 
 #include <stdint.h>
+#ifndef EMU_HEADLESS
 #include <SDL.h>
+#endif
 
 typedef enum KeyPad{
     TURBO_B     = 1 << 9,
@@ -25,6 +27,8 @@ typedef struct JoyPad{
 
 void init_joypad(struct JoyPad* joyPad, uint8_t player);
 uint8_t read_joypad(struct JoyPad* joyPad);
-void update_joypad(struct JoyPad* joyPad, SDL_Event* event);
 void turbo_trigger(struct JoyPad* joyPad);
+#ifndef EMU_HEADLESS
+void update_joypad(struct JoyPad* joyPad, SDL_Event* event);
 void keyboard_mapper(struct JoyPad* joyPad, SDL_Event* event);
+#endif

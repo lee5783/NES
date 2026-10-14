@@ -1,7 +1,9 @@
 #include "controller.h"
+#ifndef EMU_HEADLESS
 #include "gamepad.h"
 #ifdef __ANDROID__
 #include "touchpad.h"
+#endif
 #endif
 
 
@@ -20,6 +22,7 @@ uint8_t read_joypad(struct JoyPad* joyPad){
 }
 
 
+#ifndef EMU_HEADLESS
 void keyboard_mapper(struct JoyPad* joyPad, SDL_Event* event){
     uint16_t key = 0;
     switch (event->key.key) {
@@ -85,6 +88,7 @@ void update_joypad(struct JoyPad* joyPad, SDL_Event* event){
     keyboard_mapper(joyPad, event);
     gamepad_mapper(joyPad, event);
 }
+#endif
 
 void turbo_trigger(struct JoyPad* joyPad){
     // toggle BUTTON_A AND BUTTON_B if TURBO_A and TURBO_B are set respectively

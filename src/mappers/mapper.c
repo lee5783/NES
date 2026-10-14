@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <string.h>
+#ifndef EMU_HEADLESS
 #include <SDL.h>
+#endif
 
 #include "mapper.h"
 #include "emulator.h"
@@ -155,6 +157,7 @@ static void write_CHR(Mapper *mapper, uint16_t address, uint8_t value) {
     mapper->CHR_ROM[address] = value;
 }
 
+#ifndef EMU_HEADLESS
 static long long read_file_to_buffer(char *file_name, uint8_t **buffer) {
     SDL_IOStream *file = SDL_IOFromFile(file_name, "rb");
 
@@ -214,6 +217,7 @@ void load_file(char *file_name, char *game_genie, Mapper *mapper) {
         quit(EXIT_FAILURE);
     }
 }
+#endif
 
 int load_data(ROMData *rom_data, Mapper *mapper) {
     // clear mapper

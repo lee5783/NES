@@ -4,7 +4,9 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
+#ifndef EMU_HEADLESS
 #include <SDL.h>
+#endif
 #include <string.h>
 
 #ifndef PI
@@ -75,6 +77,7 @@ void LOG(enum LogLevel logLevel, const char* fmt, ...){
     }
 }
 
+#ifndef EMU_HEADLESS
 int SDL_RenderDrawCircle(SDL_Renderer * renderer, int x, int y, int radius){
     int offsetx, offsety, d;
     int status;
@@ -158,6 +161,7 @@ int SDL_RenderFillCircle(SDL_Renderer * renderer, int x, int y, int radius) {
 
     return status;
 }
+#endif
 
 
 void to_pixel_format(const uint32_t* restrict in, uint32_t* restrict out, size_t size, ColorFormat format){
