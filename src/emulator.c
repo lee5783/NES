@@ -122,6 +122,18 @@ int init_emulator_data(Emulator* emulator, const uint8_t* rom, size_t size, cons
     return 0;
 }
 
+void run_frame(Emulator* emulator){
+    PPU* ppu = &emulator->ppu;
+    if(ppu->frames % TURBO_SKIP == 0) {
+        turbo_trigger(&emulator->mem.joy1);
+        turbo_trigger(&emulator->mem.joy2);
+    }
+    while (!ppu->render) {
+        execute(&emulator->cpu);
+    }
+    ppu->render = 0;
+}
+
 void tick_master_clock(Emulator* emulator) {
     emulator->cpu.t_cycles++;
     if (emulator->ppu.enabled) {
@@ -172,7 +184,6 @@ void run_emulator(Emulator* emulator){
     JoyPad* joy2 = &emulator->mem.joy2;
     PPU* ppu = &emulator->ppu;
     ppu->enabled = 1;
-    c6502* cpu = &emulator->cpu;
     GraphicsContext* g_ctx = &emulator->g_ctx;
     Mixer* mixer = &emulator->mixer;
     Timer* timer = &emulator->timer;
@@ -223,22 +234,12 @@ void run_emulator(Emulator* emulator){
             }
         }
 
-        // trigger turbo events
-        if(ppu->frames % TURBO_SKIP == 0) {
-            turbo_trigger(joy1);
-            turbo_trigger(joy2);
-        }
-
         if(!emulator->pause){
-            // if ppu.render is set a frame is complete
-            while (!ppu->render) {
-                execute(cpu);
-            }
+            run_frame(emulator);
 #if NAMETABLE_MODE
             render_name_tables(ppu, ppu->screen);
 #endif
             render_graphics(g_ctx, ppu->screen);
-            ppu->render = 0;
             queue_audio(mixer);
             mark_end(timer);
             adjusted_wait(timer);
