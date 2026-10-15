@@ -147,8 +147,6 @@ static void quarter_frame(APU *apu);
 
 static void half_frame(APU *apu);
 
-static void set_frame_mode(APU* apu, uint8_t mode);
-
 static void update_length_counter(LengthCounter* counter);
 
 static void clock_length_counter(LengthCounter* counter);
@@ -423,7 +421,7 @@ void set_frame_counter_ctrl(APU *apu, uint8_t value) {
     apu->reset_sequencer_delay = 3 + (apu->cycles & 1);
 }
 
-static void set_frame_mode(APU* apu, uint8_t mode) {
+void set_frame_mode(APU* apu, uint8_t mode) {
     if (apu->emulator->type == PAL)
         apu->sequence = PAL_frame_sequence[mode];
     else
