@@ -1,16 +1,12 @@
 #include <stdlib.h>
 #include "mapper.h"
+#include "vrc1.h"
 #include "utils.h"
 
 static uint8_t read_PRG(Mapper *mapper, uint16_t address);
 static void write_PRG(Mapper *mapper, uint16_t address, uint8_t val);
 static uint8_t read_CHR(Mapper *mapper, uint16_t address);
 static void update_CHR_ptrs(Mapper *mapper);
-
-typedef struct VCR1 {
-    uint8_t CHR_0;
-    uint8_t CHR_1;
-} VRC1_t;
 
 int load_VRC1(Mapper *mapper) {
     VRC1_t *vrc1 = calloc(1, sizeof(VRC1_t));

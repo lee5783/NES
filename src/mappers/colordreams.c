@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include "mapper.h"
+#include "colordreams.h"
 #include "utils.h"
 
 static uint8_t read_PRG(Mapper *, uint16_t);
@@ -8,11 +9,6 @@ static uint8_t read_CHR(Mapper *, uint16_t);
 static void write_ROM(Mapper *mapper, uint16_t address, uint8_t value);
 static void reset(Mapper *mapper);
 static void select_banks(Mapper *mapper);
-
-typedef struct {
-    uint8_t CHR;
-    uint8_t PRG;
-} reg_t;
 
 int load_colordreams(Mapper *mapper) {
     mapper->read_PRG = read_PRG;

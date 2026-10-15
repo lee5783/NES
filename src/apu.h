@@ -123,6 +123,7 @@ void set_status(APU* apu, uint8_t value);
 float get_sample(APU* apu);
 uint8_t read_apu_status(APU* apu);
 void set_frame_counter_ctrl(APU* apu, uint8_t value);
+void set_frame_mode(APU* apu, uint8_t mode);
 
 void set_pulse_ctrl(Pulse* pulse, uint8_t value);
 void set_pulse_timer(Pulse* pulse, uint8_t value);
