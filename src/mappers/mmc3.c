@@ -264,25 +264,25 @@ void write_bank_data(Mapper *mapper, uint8_t val) {
             // R0
             val = val & 0xFE;
             val &= mmc3->CHR_clamp;
-            mmc3->CHR_bank_ptrs[0] = mapper->CHR_ROM + val * 0x400;
+            mmc3->CHR_bank_ptrs[0] = CHR_bank(mapper, 0x400, val);
             mmc3->CHR_bank_ptrs[1] = mmc3->CHR_bank_ptrs[0] + 0x400;
             break;
         case 1:
             // R1
             val = val & 0xFE;
             val &= mmc3->CHR_clamp;
-            mmc3->CHR_bank_ptrs[2] = mapper->CHR_ROM + val * 0x400;
+            mmc3->CHR_bank_ptrs[2] = CHR_bank(mapper, 0x400, val);
             mmc3->CHR_bank_ptrs[3] = mmc3->CHR_bank_ptrs[2] + 0x400;
             break;
         case 2:case 3:case 4:case 5:
             // R2/R3/R4/R5
             val &= mmc3->CHR_clamp;
-            mmc3->CHR_bank_ptrs[mmc3->next_bank_data + 2] = mapper->CHR_ROM + val * 0x400;
+            mmc3->CHR_bank_ptrs[mmc3->next_bank_data + 2] = CHR_bank(mapper, 0x400, val);
             break;
         case 6:case 7:default:
             // R6/R7
             val &= mmc3->PRG_clamp;
-            mmc3->PRG_bank_ptrs[mmc3->next_bank_data - 6] = mapper->PRG_ROM + val * 0x2000;
+            mmc3->PRG_bank_ptrs[mmc3->next_bank_data - 6] = PRG_bank(mapper, 0x2000, val);
             break;
     }
 }

@@ -429,3 +429,17 @@ void free_mapper(Mapper *mapper) {
     }
     LOG(DEBUG, "Mapper cleanup complete");
 }
+
+static uint8_t *select_bank(uint8_t *memory, size_t size, size_t bank_size, size_t bank) {
+    size_t count = size / bank_size;
+    return memory + (count ? bank % count : 0) * bank_size;
+}
+
+uint8_t *PRG_bank(Mapper *mapper, size_t bank_size, size_t bank) {
+    return select_bank(mapper->PRG_ROM, 0x4000 * (size_t)mapper->PRG_banks, bank_size, bank);
+}
+
+uint8_t *CHR_bank(Mapper *mapper, size_t bank_size, size_t bank) {
+    size_t size = mapper->CHR_banks ? 0x2000 * (size_t)mapper->CHR_banks : mapper->CHR_RAM_size;
+    return select_bank(mapper->CHR_ROM, size, bank_size, bank);
+}

@@ -19,9 +19,9 @@ static uint8_t read_PRG(Mapper *mapper, uint16_t address) {
 
 static void write_PRG(Mapper *mapper, uint16_t address, uint8_t value) {
     // PRG bank determined by bit 5 - 4
-    mapper->PRG_ptrs[0] = mapper->PRG_ROM + ((value >> 4) & 0x3) * 0x8000;
+    mapper->PRG_ptrs[0] = PRG_bank(mapper, 0x8000, (value >> 4) & 0x3);
     // 8k CHR bank selected determined by bit 0 - 1
-    mapper->CHR_ptrs[0] = mapper->CHR_ROM + 0x2000 * (value & 0x3);
+    mapper->CHR_ptrs[0] = CHR_bank(mapper, 0x2000, value & 0x3);
 }
 
 static uint8_t read_CHR(Mapper *mapper, uint16_t address) {

@@ -85,6 +85,8 @@ void load_file(char *file_name, char *game_genie, Mapper *mapper);
 int load_data(ROMData *data, Mapper *mapper);
 void free_mapper(Mapper *mapper);
 void set_mirroring(Mapper *mapper, Mirroring mirroring);
+uint8_t *PRG_bank(Mapper *mapper, size_t bank_size, size_t bank);
+uint8_t *CHR_bank(Mapper *mapper, size_t bank_size, size_t bank);
 
 // mapper specifics
 

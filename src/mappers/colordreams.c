@@ -71,8 +71,8 @@ static void write_ROM(Mapper *mapper, uint16_t address, uint8_t value) {
 
 static void select_banks(Mapper *mapper) {
     const colordreams_reg_t *reg = mapper->extension;
-    mapper->PRG_ptrs[0] = mapper->PRG_ROM + reg->PRG * 0x8000;
-    mapper->CHR_ptrs[0] = mapper->CHR_ROM + reg->CHR * 0x2000;
+    mapper->PRG_ptrs[0] = PRG_bank(mapper, 0x8000, reg->PRG);
+    mapper->CHR_ptrs[0] = CHR_bank(mapper, 0x2000, reg->CHR);
 }
 
 static uint8_t read_PRG(Mapper *mapper, uint16_t address) {
@@ -89,8 +89,8 @@ static void write_PRG(Mapper *mapper, uint16_t address, uint8_t value) {
     |||| ++--- Used for lockout defeat
     ++++------ Select 8 KB CHR ROM bank for PPU $0000-$1FFF
     */
-    mapper->PRG_ptrs[0] = mapper->PRG_ROM + (value & 0x3) * 0x8000;
-    mapper->CHR_ptrs[0] = mapper->CHR_ROM + 0x2000 * ((value >> 4) & 0xf);
+    mapper->PRG_ptrs[0] = PRG_bank(mapper, 0x8000, value & 0x3);
+    mapper->CHR_ptrs[0] = CHR_bank(mapper, 0x2000, (value >> 4) & 0xf);
 }
 
 static uint8_t read_CHR(Mapper *mapper, uint16_t address) {
