@@ -22,7 +22,7 @@ int load_colordreams(Mapper *mapper) {
 int load_colordreams46(Mapper *mapper) {
     // two store the two registers
     // CHR = 0, PRG = 1
-    mapper->extension = calloc(1, sizeof(reg_t));
+    mapper->extension = calloc(1, sizeof(colordreams_reg_t));
     mapper->write_ROM = write_ROM;
     mapper->read_PRG = read_PRG;
     mapper->read_CHR = read_CHR;
@@ -44,7 +44,7 @@ static void write_ROM(Mapper *mapper, uint16_t address, uint8_t value) {
     }
 
     if (address < 0x8000) {
-        reg_t *reg = mapper->extension;
+        colordreams_reg_t *reg = mapper->extension;
         reg->CHR &= 0x7;
         reg->CHR |= (value & 0xf0) >> 1;
         reg->PRG &= 0x1;
@@ -61,7 +61,7 @@ static void write_ROM(Mapper *mapper, uint16_t address, uint8_t value) {
      |||    +- PRG LOW
      +++------ CHR LOW
     */
-    reg_t *reg = mapper->extension;
+    colordreams_reg_t *reg = mapper->extension;
     reg->CHR &= ~0x7;
     reg->CHR |= (value & 0x70) >> 4;
     reg->PRG &= ~0x1;
@@ -70,7 +70,7 @@ static void write_ROM(Mapper *mapper, uint16_t address, uint8_t value) {
 }
 
 static void select_banks(Mapper *mapper) {
-    const reg_t *reg = mapper->extension;
+    const colordreams_reg_t *reg = mapper->extension;
     mapper->PRG_ptrs[0] = mapper->PRG_ROM + reg->PRG * 0x8000;
     mapper->CHR_ptrs[0] = mapper->CHR_ROM + reg->CHR * 0x2000;
 }

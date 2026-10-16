@@ -5,4 +5,4 @@
 typedef struct {
     uint8_t CHR;
     uint8_t PRG;
-} reg_t;
+} colordreams_reg_t;
