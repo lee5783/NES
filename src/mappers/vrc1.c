@@ -29,7 +29,7 @@ static void write_PRG(Mapper *mapper, uint16_t address, uint8_t val) {
 
     switch (address & 0xf000) {
         case 0x8000:
-            mapper->PRG_ptrs[0] = mapper->PRG_ROM + (val & 0xf) * 0x2000;
+            mapper->PRG_ptrs[0] = PRG_bank(mapper, 0x2000, val & 0xf);
             break;
         case 0x9000:
             if (mapper->mirroring != FOUR_SCREEN) {
@@ -43,10 +43,10 @@ static void write_PRG(Mapper *mapper, uint16_t address, uint8_t val) {
             update_CHR_ptrs(mapper);
             break;
         case 0xa000:
-            mapper->PRG_ptrs[1] = mapper->PRG_ROM + (val & 0xf) * 0x2000;
+            mapper->PRG_ptrs[1] = PRG_bank(mapper, 0x2000, val & 0xf);
             break;
         case 0xc000:
-            mapper->PRG_ptrs[2] = mapper->PRG_ROM + (val & 0xf) * 0x2000;
+            mapper->PRG_ptrs[2] = PRG_bank(mapper, 0x2000, val & 0xf);
             break;
         case 0xe000:
             vrc1->CHR_0 = (vrc1->CHR_0 & ~0xf) | (val & 0xf);
@@ -71,6 +71,6 @@ static uint8_t read_CHR(Mapper *mapper, uint16_t address) {
 
 static void update_CHR_ptrs(Mapper *mapper) {
     VRC1_t *vrc1 = mapper->extension;
-    mapper->CHR_ptrs[0] = mapper->CHR_ROM + vrc1->CHR_0 * 0x1000;
-    mapper->CHR_ptrs[1] = mapper->CHR_ROM + vrc1->CHR_1 * 0x1000;
+    mapper->CHR_ptrs[0] = CHR_bank(mapper, 0x1000, vrc1->CHR_0);
+    mapper->CHR_ptrs[1] = CHR_bank(mapper, 0x1000, vrc1->CHR_1);
 }

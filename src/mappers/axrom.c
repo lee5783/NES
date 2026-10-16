@@ -11,7 +11,7 @@ int load_AOROM(Mapper *mapper) {
 }
 
 static void write_PRG(Mapper *mapper, uint16_t address, uint8_t value) {
-    mapper->PRG_ptrs[0] = mapper->PRG_ROM + (value & 0x7) * 0x8000;
+    mapper->PRG_ptrs[0] = PRG_bank(mapper, 0x8000, value & 0x7);
     if ((value >> 4) & 0x1)
         set_mirroring(mapper, ONE_SCREEN_UPPER);
 

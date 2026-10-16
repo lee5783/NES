@@ -137,19 +137,19 @@ static void set_PRG_banks(MMC1_t *mmc1, Mapper *mapper) {
     switch (mmc1->PRG_mode) {
         case 0:
         case 1:
-            mmc1->PRG_bank1 = mapper->PRG_ROM + (0x4000 * (mmc1->PRG_reg & ~1));
-            mmc1->PRG_bank2 = mmc1->PRG_bank1 + 0x4000;
+            mmc1->PRG_bank1 = PRG_bank(mapper, 0x4000, mmc1->PRG_reg & ~1);
+            mmc1->PRG_bank2 = PRG_bank(mapper, 0x4000, mmc1->PRG_reg | 1);
             break;
         case 2:
             // fix first bank switch second bank
-            mmc1->PRG_bank1 = mapper->PRG_ROM + (0x4000 * (mmc1->PRG_reg & BIT_4));
-            mmc1->PRG_bank2 = mapper->PRG_ROM + 0x4000 * mmc1->PRG_reg;
+            mmc1->PRG_bank1 = PRG_bank(mapper, 0x4000, mmc1->PRG_reg & BIT_4);
+            mmc1->PRG_bank2 = PRG_bank(mapper, 0x4000, mmc1->PRG_reg);
             break;
         case 3:
             // fix second bank switch first bank
-            mmc1->PRG_bank1 = mapper->PRG_ROM + 0x4000 * mmc1->PRG_reg;
+            mmc1->PRG_bank1 = PRG_bank(mapper, 0x4000, mmc1->PRG_reg);
             if (mapper->PRG_banks > 16)
-                mmc1->PRG_bank2 = mapper->PRG_ROM + (((mmc1->PRG_reg & BIT_4) > 0) + 1) * 0x40000 - 0x4000;
+                mmc1->PRG_bank2 = PRG_bank(mapper, 0x4000, (mmc1->PRG_reg & BIT_4) | 0xf);
             else
                 mmc1->PRG_bank2 = mapper->PRG_ROM + (mapper->PRG_banks - 1) * 0x4000;
             break;
@@ -161,10 +161,10 @@ static void set_PRG_banks(MMC1_t *mmc1, Mapper *mapper) {
 static void set_CHR_banks(MMC1_t *mmc1, Mapper *mapper) {
     if (mmc1->CHR_mode) {
         // 2 4KB banks
-        mmc1->CHR_bank1 = mapper->CHR_ROM + (0x1000 * mmc1->CHR1_reg);
-        mmc1->CHR_bank2 = mapper->CHR_ROM + (0x1000 * mmc1->CHR2_reg);
+        mmc1->CHR_bank1 = CHR_bank(mapper, 0x1000, mmc1->CHR1_reg);
+        mmc1->CHR_bank2 = CHR_bank(mapper, 0x1000, mmc1->CHR2_reg);
     } else {
-        mmc1->CHR_bank1 = mapper->CHR_ROM + (0x1000 * (mmc1->CHR1_reg & ~1));
+        mmc1->CHR_bank1 = CHR_bank(mapper, 0x1000, mmc1->CHR1_reg & ~1);
         mmc1->CHR_bank2 = mmc1->CHR_bank1 + 0x1000;
     }
 }
