@@ -60,6 +60,7 @@ set (CORE_SRC
         src/mappers/mmc3.c
         src/mappers/colordreams.c
         src/mappers/vrc1.c
+        src/mappers/vrc2_4.c
         src/mappers/mapper185.c
         src/mappers/cprom.c
 )
