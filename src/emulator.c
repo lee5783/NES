@@ -149,6 +149,8 @@ void tick_master_clock(Emulator* emulator) {
             }
         }
     }
+    if (emulator->mapper.clock != NULL)
+        emulator->mapper.clock(&emulator->mapper);
     if (emulator->mapper.is_nsf) {
         NSF* nsf = emulator->mapper.NSF;
 
