@@ -36,7 +36,7 @@ static uint8_t read_PRG(Mapper *mapper, uint16_t address) {
 }
 
 static void write_PRG(Mapper *mapper, uint16_t address, uint8_t value) {
-    mapper->PRG_ptrs[0] = PRG_bank(mapper, 0x4000, value & 0x7);
+    mapper->PRG_ptrs[0] = PRG_bank(mapper, 0x4000, value);
 }
 
 static void write_PRG_UN1ROM(Mapper *mapper, uint16_t address, uint8_t value) {
