@@ -43,6 +43,7 @@ static int select_mapper(Mapper *mapper) {
         case 7: return load_AOROM(mapper);
         case 11: return load_colordreams(mapper);
         case 13: return load_CPROM(mapper);
+        case 18: return load_SS88006(mapper);
         case 21:
         case 22:
         case 23:

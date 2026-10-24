@@ -61,6 +61,7 @@ set (CORE_SRC
         src/mappers/colordreams.c
         src/mappers/vrc1.c
         src/mappers/vrc2_4.c
+        src/mappers/jaleco_ss88006.c
         src/mappers/mapper185.c
         src/mappers/cprom.c
 )
