@@ -16,21 +16,19 @@ static void set_mapping(Mapper *mapper, uint16_t tl, uint16_t tr, uint16_t bl, u
 // generic mapper implementations
 static uint8_t read_PRG(Mapper *mapper, uint16_t address);
 static void write_PRG(Mapper *mapper, uint16_t address, uint8_t value);
-static uint8_t read_CHR(Mapper *mapper, uint16_t address);
 static void write_CHR(Mapper *mapper, uint16_t address, uint8_t value);
 static uint8_t read_ROM(Mapper *mapper, uint16_t address);
 static void write_ROM(Mapper *mapper, uint16_t address, uint8_t value);
-static void set_bus(Mapper * mapper, uint16_t addr);
 
 static int select_mapper(Mapper *mapper) {
     // load generic implementations
     mapper->read_PRG = read_PRG;
     mapper->write_PRG = write_PRG;
-    mapper->read_CHR = read_CHR;
+    mapper->read_CHR = mapper_default_read_CHR;
     mapper->write_CHR = write_CHR;
     mapper->read_ROM = read_ROM;
     mapper->write_ROM = write_ROM;
-    mapper->set_bus = set_bus;
+    mapper->set_bus = mapper_default_set_bus;
     mapper->clamp = (mapper->PRG_banks * 0x4000) - 1;
     mapper->PRG_RAM_clamp = mapper->RAM_size - 1;
 
@@ -99,7 +97,7 @@ void set_mirroring(Mapper *mapper, Mirroring mirroring) {
     mapper->mirroring = mirroring;
 }
 
-static void set_bus(Mapper * mapper, uint16_t addr) {
+void mapper_default_set_bus(Mapper * mapper, uint16_t addr) {
     // Used to monitor cartridge bus changes used for clocking
 }
 
@@ -150,7 +148,7 @@ static void write_PRG(Mapper *mapper, uint16_t address, uint8_t value) {
     LOG(DEBUG, "Attempted to write to PRG-ROM");
 }
 
-static uint8_t read_CHR(Mapper *mapper, uint16_t address) {
+uint8_t mapper_default_read_CHR(Mapper *mapper, uint16_t address) {
     return mapper->CHR_ROM[address];
 }
 

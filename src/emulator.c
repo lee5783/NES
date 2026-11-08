@@ -128,26 +128,27 @@ void run_frame(Emulator* emulator){
         turbo_trigger(&emulator->mem.joy1);
         turbo_trigger(&emulator->mem.joy2);
     }
+    begin_ppu_batch(ppu);
     while (!ppu->render) {
         execute(&emulator->cpu);
     }
+    end_ppu_batch(ppu);
     ppu->render = 0;
 }
 
 void tick_master_clock(Emulator* emulator) {
     emulator->cpu.t_cycles++;
     if (emulator->ppu.enabled) {
-        execute_ppu(&emulator->ppu);
-        execute_ppu(&emulator->ppu);
-        execute_ppu(&emulator->ppu);
+        uint8_t dots = 3;
         if (emulator->type == PAL) {
             emulator->PAL_check++;
             if (emulator->PAL_check == 5) {
                 // run extra PPU cycle on 5th cycle
-                execute_ppu(&emulator->ppu);
+                dots = 4;
                 emulator->PAL_check = 0;
             }
         }
+        clock_ppu(&emulator->ppu, dots);
     }
     if (emulator->mapper.clock != NULL)
         emulator->mapper.clock(&emulator->mapper);

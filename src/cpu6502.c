@@ -163,6 +163,8 @@ static void tick_dma(c6502* ctx, DMA* dma, uint16_t bus_addr) {
             break;
         }
         case DMA_WRITE: {
+            if (dma->type == DMA_OAM)
+                sync_ppu(ctx->ppu);
             uint16_t effective_index = dma->offset + dma->index;
             if (effective_index >= dma->length)
                 effective_index -= dma->length;
