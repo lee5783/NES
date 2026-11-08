@@ -53,10 +53,15 @@ typedef struct {
     Biquad filter;
     Biquad aa_filter;
     APU* apu;
+    float run_level;
+    size_t run_length;
+    uint8_t batch;
 #endif
 } Mixer;
 
 void sample(Mixer* mixer);
+void begin_audio_batch(Mixer* mixer);
+void end_audio_batch(Mixer* mixer);
 size_t drain_audio(Mixer* mixer, int16_t* out, size_t max);
 void adjust_audio_rate(Mixer* mixer, double ratio);
 #ifndef EMU_HEADLESS

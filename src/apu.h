@@ -112,6 +112,7 @@ typedef struct APU{
     uint32_t *sequence;
     uint8_t *directive;
     size_t cycles;
+    uint8_t level_dirty;
 } APU;
 
 
