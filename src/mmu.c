@@ -41,6 +41,8 @@ void write_mem(Memory* mem, uint16_t address, uint8_t value){
         APU* apu = &mem->emulator->apu;
         if (address < IO_REG_MIRRORED_END || address == OAM_DMA)
             sync_ppu(ppu);
+        else
+            apu->level_dirty = 1;
 
         switch (address) {
             case PPU_CTRL:

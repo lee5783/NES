@@ -129,9 +129,12 @@ void run_frame(Emulator* emulator){
         turbo_trigger(&emulator->mem.joy2);
     }
     begin_ppu_batch(ppu);
+    if (!emulator->mapper.is_nsf)
+        begin_audio_batch(&emulator->mixer);
     while (!ppu->render) {
         execute(&emulator->cpu);
     }
+    end_audio_batch(&emulator->mixer);
     end_ppu_batch(ppu);
     ppu->render = 0;
 }
@@ -172,6 +175,12 @@ void tick_master_clock(Emulator* emulator) {
 
     }
     execute_apu(&emulator->apu);
+#ifndef DISABLE_AUDIO
+    if (emulator->mixer.batch && !emulator->apu.level_dirty) {
+        emulator->mixer.run_length++;
+        return;
+    }
+#endif
     sample(&emulator->mixer);
 }
 

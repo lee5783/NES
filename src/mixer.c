@@ -2,12 +2,15 @@
 #include "emulator.h"
 #include "utils.h"
 
+#include <math.h>
 #include <string.h>
 
 #ifdef DISABLE_AUDIO
 
 void init_mixer(Emulator* emulator){}
 void sample(Mixer* mixer){}
+void begin_audio_batch(Mixer* mixer){}
+void end_audio_batch(Mixer* mixer){}
 size_t drain_audio(Mixer* mixer, int16_t* out, size_t max){return 0;}
 void adjust_audio_rate(Mixer* mixer, double ratio){}
 void queue_audio(Mixer* mixer){}
@@ -17,6 +20,7 @@ void free_mixer(const Mixer* mixer){}
 #else
 
 static void init_sampler(Mixer* mixer, int frequency, TVSystem sys);
+static void flush_run(Mixer* mixer);
 #ifndef EMU_HEADLESS
 static void init_audio_device(Mixer* mixer);
 #endif
@@ -30,6 +34,9 @@ void init_mixer(Emulator* emulator) {
     mixer->stat_index = 0;
     mixer->audio_start = 0;
     mixer->volume = 1;
+    mixer->run_level = 0;
+    mixer->run_length = 0;
+    mixer->batch = 0;
 
     init_sampler(mixer, SAMPLING_FREQUENCY, emulator->type);
 #ifndef EMU_HEADLESS
@@ -73,10 +80,111 @@ void init_sampler(Mixer* mixer, int frequency, TVSystem sys) {
 }
 
 void adjust_audio_rate(Mixer* mixer, double ratio) {
+    flush_run(mixer);
     mixer->sampler.period = mixer->sampler.nominal_period / ratio;
 }
 
+static int same_double(double a, double b) {
+    return a == b && signbit(a) == signbit(b);
+}
+
+static void emit_sample(Mixer* mixer, float sample) {
+    Sampler* sampler = &mixer->sampler;
+    mixer->buff[sampler->index++] = 32000 * biquad(sample, &mixer->filter) * mixer->volume;
+    if(sampler->index >= sampler->max_index) {
+        sampler->index = 0;
+    }
+    sampler->samples++;
+}
+
+static void flush_run(Mixer* mixer) {
+    size_t n = mixer->run_length;
+    if(!n)
+        return;
+    mixer->run_length = 0;
+
+    const double level = mixer->run_level;
+    Biquad* b = &mixer->aa_filter;
+    double x1 = b->x1, x2 = b->x2, y1 = b->y1, y2 = b->y2;
+    double counter = mixer->sampler.counter;
+    const double period = mixer->sampler.period;
+
+    while(n && !(same_double(x1, level) && same_double(x2, level))) {
+        double result = b->a0 * level + b->a1 * x1 + b->a2 * x2 - b->a3 * y1 - b->a4 * y2;
+        x2 = x1;
+        x1 = level;
+        y2 = y1;
+        y1 = result;
+        counter++;
+        if(counter >= period) {
+            emit_sample(mixer, (float)result);
+            counter -= period;
+        }
+        n--;
+    }
+
+    if(n) {
+        const double c = b->a0 * level + b->a1 * x1 + b->a2 * x2;
+        while(n) {
+            double result = c - b->a3 * y1 - b->a4 * y2;
+            if(same_double(result, y1) && same_double(y1, y2))
+                break;
+            y2 = y1;
+            y1 = result;
+            counter++;
+            if(counter >= period) {
+                emit_sample(mixer, (float)result);
+                counter -= period;
+            }
+            n--;
+        }
+        const float steady = (float)y1;
+        while(n) {
+            counter++;
+            if(counter >= period) {
+                emit_sample(mixer, steady);
+                counter -= period;
+            }
+            n--;
+        }
+    }
+
+    b->x1 = x1;
+    b->x2 = x2;
+    b->y1 = y1;
+    b->y2 = y2;
+    mixer->sampler.counter = counter;
+}
+
+void begin_audio_batch(Mixer* mixer) {
+    mixer->apu->level_dirty = 1;
+    mixer->run_length = 0;
+    mixer->batch = 1;
+}
+
+void end_audio_batch(Mixer* mixer) {
+    flush_run(mixer);
+    mixer->batch = 0;
+}
+
 void sample(Mixer* mixer) {
+    if(mixer->batch) {
+        APU* apu = mixer->apu;
+        if(!apu->level_dirty) {
+            mixer->run_length++;
+            return;
+        }
+        apu->level_dirty = 0;
+        const float level = get_sample(apu);
+        if(mixer->run_length && level == mixer->run_level) {
+            mixer->run_length++;
+            return;
+        }
+        flush_run(mixer);
+        mixer->run_level = level;
+        mixer->run_length = 1;
+        return;
+    }
     float sample = biquad(get_sample(mixer->apu), &mixer->aa_filter);
 #if AVERAGE_DOWNSAMPLING
     static float avg = -1;
@@ -107,6 +215,7 @@ void sample(Mixer* mixer) {
 }
 
 size_t drain_audio(Mixer* mixer, int16_t* out, size_t max) {
+    flush_run(mixer);
     size_t count = mixer->sampler.index < max ? mixer->sampler.index : max;
     memcpy(out, mixer->buff, count * sizeof(int16_t));
     mixer->sampler.index = 0;

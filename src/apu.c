@@ -152,6 +152,10 @@ static void update_length_counter(LengthCounter* counter);
 
 static void clock_length_counter(LengthCounter* counter);
 
+static void execute_apu_events(APU* apu);
+
+static int pulse_audible(const Pulse* pulse);
+
 
 void init_APU(struct Emulator *emulator) {
     memset(&emulator->apu, 0, sizeof(APU));
@@ -178,6 +182,7 @@ void init_APU(struct Emulator *emulator) {
     apu->sequence_step = 0;
     // suppress normal delay logic which is already factored in above
     apu->reset_sequencer_delay = 0;
+    apu->level_dirty = 1;
 }
 
 void reset_APU(APU *apu) {
@@ -191,9 +196,10 @@ void reset_APU(APU *apu) {
     apu->sequencer = 10 - 3;
     apu->sequence_step = 0;
     apu->reset_sequencer_delay = 0;
+    apu->level_dirty = 1;
 }
 
-void execute_apu(APU *apu) {
+static void execute_apu_events(APU *apu) {
     // Perform necessary reset after $4017 write
     if (apu->reset_sequencer_delay) {
         apu->reset_sequencer_delay--;
@@ -222,6 +228,11 @@ void execute_apu(APU *apu) {
             interrupt_clear(&apu->emulator->cpu, APU_FRAME_IRQ);
         }
     }
+}
+
+void execute_apu(APU *apu) {
+    if (apu->reset_sequencer_delay | apu->irq_should_set | apu->irq_clear_delay)
+        execute_apu_events(apu);
 
     if (apu->sequencer == apu->sequence[apu->sequence_step]) {
         uint8_t directive = apu->directive[apu->sequence_step];
@@ -252,8 +263,10 @@ void execute_apu(APU *apu) {
 
     if (apu->cycles & 1) {
         // channel sequencer
-        clock_divider(&apu->pulse1.t);
-        clock_divider(&apu->pulse2.t);
+        if (clock_divider(&apu->pulse1.t) && pulse_audible(&apu->pulse1))
+            apu->level_dirty = 1;
+        if (clock_divider(&apu->pulse2.t) && pulse_audible(&apu->pulse2))
+            apu->level_dirty = 1;
 
         // noise timer
         if (clock_divider(&apu->noise.timer)) {
@@ -261,6 +274,9 @@ void execute_apu(APU *apu) {
             uint8_t feedback = (noise->shift & BIT_0) ^ (((noise->mode ? BIT_6 : BIT_1) & noise->shift) > 0);
             noise->shift >>= 1;
             noise->shift |= feedback ? (1 << 14) : 0;
+            if (noise->enabled && noise->l.counter > 0
+                && (noise->const_volume ? noise->envelope.period : noise->envelope.step))
+                apu->level_dirty = 1;
         }
     }
 
@@ -271,15 +287,29 @@ void execute_apu(APU *apu) {
     clock_dmc(apu);
 
     // triangle timer
-    clock_triangle(&apu->triangle);
+    uint32_t tri_step = apu->triangle.sequencer.step;
+    if (clock_triangle(&apu->triangle) && tri_step != apu->triangle.sequencer.step
+        && apu->triangle.enabled && apu->triangle.sequencer.period > 1)
+        apu->level_dirty = 1;
 
     // update length counters
-    update_length_counter(&apu->pulse1.l);
-    update_length_counter(&apu->pulse2.l);
-    update_length_counter(&apu->noise.l);
-    update_length_counter(&apu->triangle.l);
+    if (apu->pulse1.l.new_counter | (apu->pulse1.l.halt ^ apu->pulse1.l.new_halt)
+        | apu->pulse2.l.new_counter | (apu->pulse2.l.halt ^ apu->pulse2.l.new_halt)
+        | apu->noise.l.new_counter | (apu->noise.l.halt ^ apu->noise.l.new_halt)
+        | apu->triangle.l.new_counter | (apu->triangle.l.halt ^ apu->triangle.l.new_halt)) {
+        update_length_counter(&apu->pulse1.l);
+        update_length_counter(&apu->pulse2.l);
+        update_length_counter(&apu->noise.l);
+        update_length_counter(&apu->triangle.l);
+        apu->level_dirty = 1;
+    }
 
     apu->cycles++;
+}
+
+static int pulse_audible(const Pulse* pulse) {
+    return pulse->enabled && pulse->l.counter && !pulse->mute
+        && (pulse->const_volume ? pulse->envelope.period : pulse->envelope.step);
 }
 
 static void update_length_counter(LengthCounter* counter) {
@@ -318,6 +348,7 @@ void quarter_frame(APU *apu) {
     triangle->linear_reload_flag = triangle->l.halt ? triangle->linear_reload_flag : 0;
     // suppress frame counter clocking for this and the next cycle
     apu->suppress_frame_unit = 2;
+    apu->level_dirty = 1;
 }
 
 void half_frame(APU *apu) {
@@ -332,6 +363,7 @@ void half_frame(APU *apu) {
     clock_length_counter(&apu->noise.l);
     // suppress frame counter clocking for this and the next cycle
     apu->suppress_frame_unit = 2;
+    apu->level_dirty = 1;
 }
 
 
@@ -362,6 +394,7 @@ float get_sample(APU *apu) {
 
 
 void set_status(APU *apu, uint8_t value) {
+    apu->level_dirty = 1;
     apu->pulse1.enabled = (value & BIT_0) > 0;
     apu->pulse2.enabled = (value & BIT_1) > 0;
     apu->triangle.enabled = (value & BIT_2) > 0;
@@ -573,6 +606,7 @@ void clock_dmc(APU* apu) {
                 else if(dmc->counter > 1)
                     dmc->counter-=2;
                 dmc->bits >>= 1;
+                apu->level_dirty = 1;
             }
             dmc->bits_remaining--;
         }
@@ -592,6 +626,9 @@ void clock_dmc(APU* apu) {
             dmc->bits_remaining = 8;
         }
     }
+
+    if (!(dmc->dma_scheduled | dmc->toggle_delay))
+        return;
 
     // scheduled dma only starts if DMC is ready
     if (dmc->dma_scheduled && dmc->ready) {
