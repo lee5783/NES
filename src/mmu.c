@@ -39,6 +39,8 @@ void write_mem(Memory* mem, uint16_t address, uint8_t value){
     if(address < IO_REG_END){
         PPU* ppu = &mem->emulator->ppu;
         APU* apu = &mem->emulator->apu;
+        if (address < IO_REG_MIRRORED_END || address == OAM_DMA)
+            sync_ppu(ppu);
 
         switch (address) {
             case PPU_CTRL:
@@ -145,6 +147,7 @@ void write_mem(Memory* mem, uint16_t address, uint8_t value){
         return;
     }
 
+    sync_ppu(&mem->emulator->ppu);
     mem->mapper->write_ROM(mem->mapper, address, value);
 }
 uint8_t read_mem(Memory* mem, uint16_t address){
@@ -160,6 +163,8 @@ uint8_t read_mem(Memory* mem, uint16_t address){
     // handle all IO registers
     if(address < IO_REG_END){
         PPU* ppu = &mem->emulator->ppu;
+        if (address < IO_REG_MIRRORED_END)
+            sync_ppu(ppu);
         switch (address) {
             case PPU_STATUS:
                 set_latch(ppu, read_status(ppu), 0xe0);

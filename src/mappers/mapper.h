@@ -88,6 +88,8 @@ void free_mapper(Mapper *mapper);
 void set_mirroring(Mapper *mapper, Mirroring mirroring);
 uint8_t *PRG_bank(Mapper *mapper, size_t bank_size, size_t bank);
 uint8_t *CHR_bank(Mapper *mapper, size_t bank_size, size_t bank);
+void mapper_default_set_bus(Mapper *mapper, uint16_t addr);
+uint8_t mapper_default_read_CHR(Mapper *mapper, uint16_t address);
 
 // mapper specifics
 

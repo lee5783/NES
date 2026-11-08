@@ -142,6 +142,10 @@ typedef struct PPU{
 
     struct Emulator* emulator;
     Mapper* mapper;
+
+    size_t pending_dots;
+    size_t dot_budget;
+    uint8_t defer_dots;
 } PPU;
 
 // ARGB8888 palette
@@ -161,6 +165,10 @@ extern uint32_t nes_palette[64];
 
 
 void execute_ppu(PPU* ppu);
+void clock_ppu(PPU* ppu, uint8_t dots);
+void sync_ppu(PPU* ppu);
+void begin_ppu_batch(PPU* ppu);
+void end_ppu_batch(PPU* ppu);
 void execute_ppu_old(PPU* ppu);
 void reset_ppu(PPU* ppu);
 void exit_ppu(PPU* ppu);
